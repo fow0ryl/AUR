@@ -1,0 +1,68 @@
+# Maintainer: zxp19821005 <zxp19821005 at 163 dot com>
+# Maintainer: fow0ryl <henning.ryll at web dot de>
+pkgname=zoraxy-git
+pkgver=3.3.1.rc2.r0.ga96a07a
+pkgrel=1
+pkgdesc='A general purpose HTTP reverse proxy and forwarding tool.'
+arch=('any')
+url="https://zoraxy.aroz.org/"
+_ghurl="https://github.com/tobychui/zoraxy"
+license=('AGPL-3.0-only')
+provides=("${pkgname%-}")
+conflicts=("${pkgname%}-bin")
+depends=()
+makedepends=(
+    'git'
+    'go'
+)
+source=(
+#    "${pkgname//-/.}::git+${_ghurl}.git"
+    "${pkgname}::git+${_ghurl}.git"
+    "${pkgname%-*}.service"
+    "${pkgname%-*}-sysusers.conf"
+)
+
+sha256sums=(
+            'SKIP'
+            'cb034c1d79788fa3fb1c7259cf97da3578ea0c43db2fa1412b8d3ece86a843ca'
+            '3f42da6187342b12a3f6cab989c04aeddbff7b524816dc62abffef42ac50fbc4'
+           )
+
+pkgver() {
+    cd "${srcdir}/${pkgname}"
+    set -o pipefail
+    git describe --long --tags --abbrev=7 | sed 's/\([^-]*-g\)/r\1/;s/-/./g;s/v//g' ||
+    printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short=7 HEAD)"
+}
+
+prepare() {
+    export CGO_ENABLED=1
+    export GO111MODULE=on
+    export GOOS=linux
+    export GOCACHE="${srcdir}/go-build"
+    export GOMODCACHE="${srcdir}/go/pkg/mod"
+    if [[ "$(curl -s ipinfo.io/country)" == *"CN"* ]]; then
+        export GOPROXY=https://goproxy.cn,direct
+    fi
+}
+build() {
+    cd "${srcdir}/${pkgname}/src"
+    go mod tidy
+    go build
+}
+
+package() {
+	cd ${pkgdir}
+
+	# create package directorys
+	install -dm0755 ${pkgdir}/opt/${pkgname%-*}/bin
+
+	# install binary
+    install -Dm755 "${srcdir}/${pkgname}/src/${pkgname%-*}" "${pkgdir}/opt/${pkgname%-*}/bin/${pkgname%-*}"
+
+	# create users via systemd 
+	install -vDm644 "$srcdir/zoraxy-sysusers.conf" "$pkgdir/usr/lib/sysusers.d/zoraxy.conf"
+	
+	# install systemd service file 
+        install -Dm644 "${srcdir}/${pkgname%-*}.service" -t "${pkgdir}/usr/lib/systemd/system"
+}
