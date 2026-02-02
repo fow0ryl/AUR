@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=QHexEdit
+Comment=Qt6 based HexEditor
+Comment[de]=Hex Editor für QT6
+Exec=hexedit %f
+Icon=hexedit
+Terminal=false
+X-MultipleArgs=false
+Type=Application
+Categories=Development;Utility;
+StartupWMClass=hexedit

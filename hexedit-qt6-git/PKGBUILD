@@ -1,0 +1,55 @@
+# Maintainer: Alfredo Ramos <alfredo.ramos@skiff.com>
+
+_pkgname=hexedit
+pkgname=$_pkgname-qt6-git
+pkgver=0.89.0
+pkgrel=1
+pkgdesc='A cross-platform Hex Editor. Development version.'
+arch=('i686' 'x86_64')
+url='https://github.com/qtilities/hexedit'
+#url='https://github.com/fow0ryl/hexedit'
+license=('GPL')
+
+depends=('qt6-base' 'hicolor-icon-theme')
+makedepends=('cmake' 'qt6-tools' 'git')
+provides=("${_pkgname}-qt6")
+conflicts=("${_pkgname}")
+
+#source=('git+https://github.com/fow0ryl/hexedit.git')
+source=('git+https://github.com/qtilities/hexedit.git')
+sha512sums=('SKIP')
+
+# bis kein entsprechender Eintrag im github source vorhanden ist, geht pkgver nicht ...
+#pkgver() {
+#	cd "$_pkgname"
+#	git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/^non-daw-v//;s/-/./g'
+#}
+
+prepare() {
+	cd $_pkgname/../..
+	cp hexedit.desktop src/hexedit/hexedit.desktop
+}
+
+build() {
+	# Build package
+	cd $_pkgname
+	cmake -DCMAKE_INSTALL_PREFIX=/usr .  \
+		  -DHEXEDIT_QT_VERSION=6         \
+		  -DHEXEDIT_BUILD_APPLICATION=ON \
+		  -DHEXEDIT_BUILD_PLUGIN=ON
+#		  -DHEXEDIT_BUILD_SHARED=ON      \
+	make
+}
+
+package() {
+	# Install package
+	cd $_pkgname
+
+	make install DESTDIR=$pkgdir
+
+	install -dm0755 $pkgdir/usr/share/icons/
+	install -dm0755 $pkgdir/usr/share/applications/
+	install -m0644 resources/icons/hexedit.svg $pkgdir/usr/share/icons/
+	install -m0644 resources/icons/hexedit.png $pkgdir/usr/share/icons/
+	install -m0644 hexedit.desktop $pkgdir/usr/share/applications/hexedit.desktop
+}
